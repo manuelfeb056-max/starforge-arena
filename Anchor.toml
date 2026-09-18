@@ -8,11 +8,17 @@ skip-lint = false
 [programs.localnet]
 starforge = "9zrUdECfgs7CC2tzgNeRXjEQA6MWvQofFv1Rzbc1oc9m"
 
+# Devnet: mismo program ID (mismo keypair de deploy en target/deploy/).
+# El egress de esta VM bloquea api.devnet.solana.com (ver docs/MILESTONES.md);
+# el deploy a devnet se ejecuta con: anchor deploy --provider.cluster devnet
+[programs.devnet]
+starforge = "9zrUdECfgs7CC2tzgNeRXjEQA6MWvQofFv1Rzbc1oc9m"
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
