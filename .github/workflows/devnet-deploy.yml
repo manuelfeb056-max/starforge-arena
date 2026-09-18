@@ -48,7 +48,9 @@ jobs:
 
       - name: Build program (SBF)
         run: |
-          cargo build-sbf
+          anchor build
+          ls -la programs/starforge/target/deploy/starforge.so
+          cp programs/starforge/target/deploy/starforge.so target/deploy/starforge.so
           ls -la target/deploy/starforge.so
 
 
@@ -74,4 +76,3 @@ jobs:
           cp "$HOME/.config/solana/id.json" /tmp/ci-wallet.json
           npm ci || npm install
           ANCHOR_WALLET=/tmp/ci-wallet.json npx ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
----
