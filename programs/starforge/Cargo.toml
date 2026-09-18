@@ -1,0 +1,21 @@
+[package]
+name = "starforge"
+version = "0.1.0"
+description = "Starforge Arena — provably-fair arcade on Solana (Colosseum)"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "starforge"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = "0.31.1"
+starforge-math = { path = "../../math/starforge-math" }

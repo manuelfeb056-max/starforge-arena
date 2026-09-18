@@ -1,0 +1,10 @@
+[package]
+name = "starforge-math"
+version = "0.1.0"
+edition = "2021"
+description = "Pure port of STARFORGE math-spec.json / StarforgeGame.sol — no Solana dependencies"
+
+[dependencies]
+sha2 = "0.10"
+
+[dev-dependencies]
