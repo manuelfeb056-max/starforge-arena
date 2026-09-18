@@ -76,3 +76,4 @@ jobs:
           cp "$HOME/.config/solana/id.json" /tmp/ci-wallet.json
           npm ci || npm install
           ANCHOR_WALLET=/tmp/ci-wallet.json npx ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
+---
