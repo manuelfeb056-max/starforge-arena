@@ -10,6 +10,22 @@
 
 use sha2::{Digest, Sha256};
 
+fn sha256_hash(input: &[u8; 32]) -> [u8; 32] {
+    let mut h = Sha256::new();
+    h.update(input);
+    h.finalize().into()
+}
+
+#[cfg(feature = "parity-keccak")]
+fn keccak256_hash(input: &[u8; 32]) -> [u8; 32] {
+    use tiny_keccak::{Hasher, Keccak};
+    let mut k = Keccak::v256();
+    let mut out = [0u8; 32];
+    k.update(input);
+    k.finalize(&mut out);
+    out
+}
+
 // ---------------- constants (mirror math-spec.json) ----------------
 
 pub const COLS: usize = 6;
@@ -71,18 +87,33 @@ pub const STAGE_DONE: u8 = 3;
 pub struct Cursor {
     seed: [u8; 32],
     idx: usize,
+    hash: fn(&[u8; 32]) -> [u8; 32],
 }
 
 impl Cursor {
+    /// Solana-native cursor: sha256-chained. Used on-chain.
     pub fn new(seed: [u8; 32]) -> Self {
-        Self { seed, idx: 0 }
+        Self {
+            seed,
+            idx: 0,
+            hash: sha256_hash,
+        }
+    }
+
+    /// Keccak-chained cursor: ONLY for parity against the Python/EVM reference.
+    /// Byte-identical to `simulator/parity.py`'s Cursor. Never used on-chain.
+    #[cfg(feature = "parity-keccak")]
+    pub fn new_keccak(seed: [u8; 32]) -> Self {
+        Self {
+            seed,
+            idx: 0,
+            hash: keccak256_hash,
+        }
     }
 
     pub fn next_byte(&mut self) -> u8 {
         if self.idx >= 32 {
-            let mut h = Sha256::new();
-            h.update(self.seed);
-            self.seed = h.finalize().into();
+            self.seed = (self.hash)(&self.seed);
             self.idx = 0;
         }
         let b = self.seed[self.idx];
@@ -228,8 +259,19 @@ pub struct SpinOutcome {
 }
 
 /// Full spin: draws, cascades (cap 2), patterns, supernova check + prize shuffle.
+/// Uses the Solana-native sha256 cursor (on-chain path).
 pub fn run_spin(seed: [u8; 32], artifacts: u8) -> SpinOutcome {
-    let mut cur = Cursor::new(seed);
+    run_spin_cursor(Cursor::new(seed), artifacts)
+}
+
+/// Full spin with the keccak-chained cursor — parity against the Python/EVM
+/// reference ONLY. Requires the `parity-keccak` feature; never used on-chain.
+#[cfg(feature = "parity-keccak")]
+pub fn run_spin_keccak(seed: [u8; 32], artifacts: u8) -> SpinOutcome {
+    run_spin_cursor(Cursor::new_keccak(seed), artifacts)
+}
+
+fn run_spin_cursor(mut cur: Cursor, artifacts: u8) -> SpinOutcome {
     let mut grid = [0u8; CELLS];
     for i in 0..CELLS {
         grid[i] = cur.draw_symbol();

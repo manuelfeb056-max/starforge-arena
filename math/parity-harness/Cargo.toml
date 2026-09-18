@@ -1,0 +1,13 @@
+[package]
+name = "parity-harness"
+version = "0.1.0"
+edition = "2021"
+description = "Parity harness: runs starforge-math with the keccak cursor and prints JSON. NOT part of the on-chain build."
+
+[[bin]]
+name = "parity-harness"
+path = "src/main.rs"
+
+[dependencies]
+starforge-math = { path = "../starforge-math", features = ["parity-keccak"] }
+serde_json = "1"

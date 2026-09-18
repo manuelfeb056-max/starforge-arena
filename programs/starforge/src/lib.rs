@@ -12,12 +12,35 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::slot_hashes::SlotHashes;
 use starforge_math as m;
 
-declare_id!("StarForgeArena1111111111111111111111111111111");
+declare_id!("9zrUdECfgs7CC2tzgNeRXjEQA6MWvQofFv1Rzbc1oc9m");
 
 /// Slots to wait before the committed randomness becomes available.
 pub const REVEAL_DELAY_SLOTS: u64 = 10;
 /// Max cascade steps whose grids are stored (matches math crate).
 pub const MAX_STEPS: usize = 2;
+
+/// Extract the values `settle_session` needs, ending the `&mut Session` borrow.
+/// (macro_rules must be defined before the #[program] module to be in scope)
+macro_rules! settle_now {
+    ($ctx:expr, $session:expr) => {{
+        let wager = $session.wager;
+        let total_bps = $session.total_bps;
+        let seed = $session.seed;
+        let player_key = $session.player;
+        let session_key = $ctx.accounts.session.key();
+        let session_info = $ctx.accounts.session.to_account_info();
+        let player_info = $ctx.accounts.player.to_account_info();
+        settle_session(
+            &session_info,
+            &player_info,
+            session_key,
+            player_key,
+            wager,
+            total_bps,
+            seed,
+        )
+    }};
+}
 
 #[program]
 pub mod starforge {
@@ -81,7 +104,7 @@ pub mod starforge {
         let entry = slot_hashes
             .get(&session.request_slot)
             .ok_or(ArenaError::SlotHashExpired)?;
-        let seed: [u8; 32] = entry.hash.to_bytes();
+        let seed: [u8; 32] = entry.to_bytes();
 
         let outcome = m::run_spin(seed, session.artifacts);
         session.grid_win_bps = outcome.grid_win_bps;
@@ -155,7 +178,7 @@ pub mod starforge {
         let entry = slot_hashes
             .get(&session.request_slot)
             .ok_or(ArenaError::SlotHashExpired)?;
-        let seed: [u8; 32] = entry.hash.to_bytes();
+        let seed: [u8; 32] = entry.to_bytes();
 
         session.gamble_win = m::coin_flip(seed);
         session.total_bps = session.grid_win_bps
@@ -202,28 +225,6 @@ fn settle_session(
     // `close_session` instruction in the production build; kept out of the
     // scaffold to keep the account-borrow story simple for review.
     Ok(())
-}
-
-/// Extract the values `settle_session` needs, ending the `&mut Session` borrow.
-macro_rules! settle_now {
-    ($ctx:expr, $session:expr) => {{
-        let wager = $session.wager;
-        let total_bps = $session.total_bps;
-        let seed = $session.seed;
-        let player_key = $session.player;
-        let session_key = $ctx.accounts.session.key();
-        let session_info = $ctx.accounts.session.to_account_info();
-        let player_info = $ctx.accounts.player.to_account_info();
-        settle_session(
-            &session_info,
-            &player_info,
-            session_key,
-            player_key,
-            wager,
-            total_bps,
-            seed,
-        )
-    }};
 }
 
 // ---------------- accounts ----------------

@@ -6,5 +6,11 @@ description = "Pure port of STARFORGE math-spec.json / StarforgeGame.sol — no 
 
 [dependencies]
 sha2 = "0.10"
+tiny-keccak = { version = "2.0", features = ["keccak"], optional = true }
+
+[features]
+# Parity-only: keccak-chained cursor to match the Python/EVM reference byte-for-byte.
+# The on-chain program NEVER enables this; it always uses sha256 (Solana native).
+parity-keccak = ["dep:tiny-keccak"]
 
 [dev-dependencies]

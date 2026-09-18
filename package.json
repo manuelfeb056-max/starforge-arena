@@ -1,0 +1,1 @@
+{"dependencies":{"@coral-xyz/anchor":"0.31.1","@solana/web3.js":"^1.98.0"},"devDependencies":{"@types/chai":"^5.2.1","@types/mocha":"^10.0.10","@types/node":"^26.6.1","chai":"^4.5.0","ts-mocha":"^11.1.0","typescript":"^5.6.3"},"name":"starforge-arena-tests","private":true,"scripts":{"test":"yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"},"version":"0.1.0"}
