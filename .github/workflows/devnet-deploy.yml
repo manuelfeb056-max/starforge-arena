@@ -1,0 +1,57 @@
+name: devnet-deploy
+
+# Deploys Starforge Arena to Solana devnet and runs the e2e TS suite.
+# $0 real spend: devnet only, throwaway wallet, funded by faucet airdrops.
+# Never add mainnet to this workflow.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'programs/**'
+      - 'Anchor.toml'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/devnet-deploy.yml'
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Solana CLI (Agave)
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - name: Install anchor-cli 0.31.1
+        run: cargo install --git https://github.com/coral-xyz/anchor --tag v0.31.1 anchor-cli --locked
+
+      - name: Restore keypairs from secrets
+        run: |
+          mkdir -p "$HOME/.config/solana" target/deploy
+          printf '%s' '${{ secrets.DEVNET_WALLET_KEYPAIR }}' > "$HOME/.config/solana/id.json"
+          printf '%s' '${{ secrets.PROGRAM_KEYPAIR }}' > target/deploy/starforge-keypair.json
+          chmod 600 "$HOME/.config/solana/id.json" target/deploy/starforge-keypair.json
+
+      - name: Fund wallet (devnet airdrop, $0)
+        run: |
+          for i in 1 2 3; do
+            solana airdrop 2 --url devnet && break || sleep 20
+          done
+          solana balance --url devnet
+
+      - name: Deploy to devnet
+        run: anchor deploy --provider.cluster devnet
+
+      - name: Run e2e test suite
+        env:
+          ANCHOR_PROVIDER_URL: https://api.devnet.solana.com
+        run: |
+          cp "$HOME/.config/solana/id.json" /tmp/ci-wallet.json
+          npm ci || npm install
+          ANCHOR_WALLET=/tmp/ci-wallet.json npx ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'
