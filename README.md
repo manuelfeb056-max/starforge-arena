@@ -10,7 +10,7 @@ sesión desde su semilla on-chain y verificar el RTP declarado.
 - **Deadline:** 12 oct 2026, 23:59 PDT
 - **Cuenta:** `nueve` (registrada 2026-09-18)
 - **RTP declarado:** 97.60% (base, sin artefactos) / 97.59% (con artefactos) — Monte Carlo 10M
-- **Repo público:** pendiente (`gh auth login` en la VM — lo hace Mannuel)
+- **Repo público:** https://github.com/manuelfeb056-max/starforge-arena
 
 ## Estructura
 
